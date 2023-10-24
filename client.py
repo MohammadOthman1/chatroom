@@ -55,22 +55,6 @@ class Chatroom(tk.Tk):
             messagebox.showinfo(title= "Closing",message="Bye kid")
             self.send(DISCONNECT_MESSAGE)
             self.destroy()
-            
-    #Chat Gpt
-    # def send(self, msg):
-    #     message = msg.encode(FORMAT)
-    #     msg_length = len(message)
-    #     client.send(msg_length.to_bytes(HEADER, byteorder='big'))
-    #     client.send(message)
-
-    #Original 
-    # def send(self, msg):
-    #     message = msg.encode(FORMAT)
-    #     msg_length = len(message)
-    #     send_length = str(msg_length).encode(FORMAT)
-    #     send_length += b' ' * (HEADER - len(send_length))
-    #     client.send(send_length)
-    #     client.send(message)
 
     def send_message(self):
         user_input = self.entrybox.get()
