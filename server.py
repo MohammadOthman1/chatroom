@@ -10,8 +10,10 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
+
 clients = []
 clientsLock = threading.Lock()
+
 #this will be running for each connection
 def handle_client(conn, addr): 
     print(f"[NEW CONNECTION]{addr} connected.")
@@ -37,9 +39,6 @@ def handle_client(conn, addr):
                 if client == conn :
                     clients.remove(client)
         conn.close()
-            
-            
-
 
 def start():
     server.listen()
@@ -51,5 +50,6 @@ def start():
         thread = threading.Thread(target=handle_client, args=(conn, addr))
         thread.start()
         print(f"[Active CONNECTIONS] {threading.active_count() - 1 } ") 
+
 print("[STARTING] Server is starting...")
 start()
