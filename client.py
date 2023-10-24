@@ -13,7 +13,6 @@ client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect(ADDR)
 
 class MyGUI:
-
     def __init__(self):
         self.root = tk.Tk()
 
@@ -33,7 +32,6 @@ class MyGUI:
 
     def close_window(self):
         self.root.quit()  # exit the tkinter main loop
-
 
     def send_message(self):
         inputt = self.textbox.get('1.0', tk.END)
