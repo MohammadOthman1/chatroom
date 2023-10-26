@@ -13,7 +13,7 @@ class DatabaseCommands():
     def connectDB(self):
         try:
             self.connection = mysql.connector.connect(
-                host = self.host,
+                host = self.localhost,
                 user = self.user,
                 password = self.password,
                 connect_timeout = 30
@@ -32,18 +32,21 @@ class DatabaseCommands():
             self.cursor.execute("""
                 CREATE TABLE ranks(
                     id INT AUTO_INCREMENT PRIMARY KEY,
-                    name VARCHAR(255),
-                )
+                    name VARCHAR(255)
+                );
             """)
+
+            self.cursor.execute("INSERT INTO ranks VALUES (1,'admin'),(2,'moderator'),(3,'member');")
+
             self.cursor.execute("""
                 CREATE TABLE users(
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     username VARCHAR(255),
-                    password VARCAHR(255),
+                    password VARCHAR(255),
                     email VARCHAR(255),
                     fk_rank INT,
-                    FOREIGN KEY (fk_rank) REFERENCES rank(id)
-                )
+                    FOREIGN KEY (fk_rank) REFERENCES ranks(id)
+                );
             """)
 
         except mysql.connector.Error as e:
@@ -59,19 +62,22 @@ class DatabaseCommands():
             self.cursor.close()
             self.connection.close()
         except Exception as e:
-            print(f"There is an Error: {str(e)} ")
+            print(f"There is an Error closing db: {str(e)} ")    
 
     def insertUser(self, username, password, email, rank):
         self.connectDB()
-        queryUsername = "SELECT username FROM users WHERE username LIKE %s"
-        valuesUsername = (f"%{username}%", )
-        self.cursor.execute(queryUsername, valuesUsername)
-        resultUsername = self.cursor.fetchone()
-        if resultUsername:
-            return 1
-        queryEmail = "SELECT username FROM users WHERE username LIKE %s"
-        passwordHash = bcrypt.hashpw(password.encode(), bcrypt.gensalt(12))
-        query = "INSERT INTO users (username, password, email, fk_rank) VALUES (%s, %s, %s,%s)"
+        resultUsername = self.checkUsername(username)
+        if resultUsername: #if username already exists it returns
+            self.closeDB()
+            return "username"
+
+        resultEmail = self.checkEmail(email)
+        if resultEmail : 
+            self.closeDB()
+            return "email"
+        
+        passwordHash = bcrypt.using(rounds=12).hash(password)
+        query = "INSERT INTO users (username, password, email, fk_rank) VALUES (%s, %s, %s, %s)"
         values = (username, passwordHash, email, rank)
 
         try:
@@ -80,9 +86,29 @@ class DatabaseCommands():
             print("Succesfully inserted new user")
         except Exception as e:
             self.connection.rollback()
-            print(f"There is an Error: {str(e)} ")
+            print(f"There is an Error inserting: {str(e)} ")
 
         self.closeDB()
+
+    def checkUsername(self, username):
+        try:
+            query = "SELECT username FROM users WHERE username LIKE %s"
+            values = (f"%{username}%", )
+            self.cursor.execute(query, values)
+            result = self.cursor.fetchone()
+            return result
+        except Exception as e:
+            print(f"Error checkusername: {e}")
+    
+    def checkEmail(self, email):
+        try:
+            query = "SELECT email FROM users WHERE email LIKE %s"
+            values = (f"%{email}%",)
+            self.cursor.execute(query, values)
+            result = self.cursor.fetchone()
+            return result
+        except Exception as e:
+            print(f"Error email: {e}")
 
     def checkLogin(self, username, password):
         query = "SELECT id FROM users WHERE username LIKE %s" # %s placeholder for username   |   checks if user is in databnase
@@ -99,6 +125,6 @@ class DatabaseCommands():
         if result2 is None:
             return False
         
-        if bcrypt.checkpw(password.encode(), result2[0].encode()):
+        if bcrypt.verify(password, result2[0]):
             return True
         return False

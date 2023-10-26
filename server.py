@@ -1,5 +1,9 @@
 import socket 
 import threading
+import json 
+
+from db import DatabaseCommands
+DB = DatabaseCommands()
 
 HEADER = 64
 PORT = 5050
@@ -24,21 +28,42 @@ def handle_client(conn, addr):
             if msg_length:
                 msg_length = int(msg_length)
                 msg = conn.recv(msg_length).decode(FORMAT)
-                if msg == DISCONNECT_MESSAGE:
-                    connected = False
-
-                print(f"[{addr}] {msg}")
-                for client in clients :
-                    if client == conn :
+                if jsonCheck(msg):
+                    unpackedData = json.loads(msg)
+                    values_list = [value for value in unpackedData.values()]
+                    #when u print inserted data it prints the returned value of insertUser in db which is "username"
+                    insertedData = DB.insertUser(values_list[0], values_list[1], values_list[2], values_list[3])
+                    if not insertedData:
                         continue
-                    
-                    client.send(f"[{addr}] {msg}".encode(FORMAT))
+                    if insertedData == "username":
+                        conn.send("username".encode(FORMAT))
+                        continue
+                    if insertedData == "email":
+                        conn.send("email".encode(FORMAT))
+
+                else:
+                    if msg == DISCONNECT_MESSAGE:
+                        connected = False
+
+                    print(f"[{addr}] {msg}")
+                    for client in clients :
+                        if client == conn :
+                            continue
+                        
+                        client.send(f"[{addr}] {msg}".encode(FORMAT))
     finally:
         with clientsLock:
             for client in clients :
                 if client == conn :
                     clients.remove(client)
         conn.close()
+
+def jsonCheck(msg):
+    try:
+        json.loads(msg)
+        return True
+    except json.JSONDecodeError:
+        return False
 
 def start():
     server.listen()
