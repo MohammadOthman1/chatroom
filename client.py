@@ -19,7 +19,7 @@ FONT = "Helvetica 14"
 FONT_BOLD = "Helvetica 13 bold"
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client.connect(ADDR)
+client.connect(ADDR)  
 
 class Chatroom(tk.Tk):
     def __init__(self):
@@ -173,7 +173,7 @@ class Chatroom(tk.Tk):
     def main(self):
         threadReceive = threading.Thread(target=self.receive)
         threadReceive.start()
-
+        
 C = Chatroom()
 C.main()
 C.mainloop()

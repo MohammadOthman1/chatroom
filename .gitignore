@@ -1,2 +1,4 @@
 __pycache__
 plan.png
+nodeFolder/node_modules
+nodeFolder/.env
