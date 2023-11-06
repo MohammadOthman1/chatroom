@@ -19,8 +19,8 @@ clients = []
 clientsLock = threading.Lock()
 
 #this will be running for each connection
-def handle_client(conn, addr): 
-    print(f"[NEW CONNECTION]{addr} connected.")
+def handle_client(conn, username): 
+    print(f"[NEW CONNECTION]{username} connected.")
     try:
         connected = True
         while connected:
@@ -28,29 +28,16 @@ def handle_client(conn, addr):
             if msg_length:
                 msg_length = int(msg_length)
                 msg = conn.recv(msg_length).decode(FORMAT)
-                if jsonCheck(msg):
-                    unpackedData = json.loads(msg)
-                    values_list = [value for value in unpackedData.values()]
-                    #when u print inserted data it prints the returned value of insertUser in db which is "username"
-                    insertedData = DB.insertUser(values_list[0], values_list[1], values_list[2], values_list[3])
-                    if not insertedData:
-                        continue
-                    if insertedData == "username":
-                        conn.send("username".encode(FORMAT))
-                        continue
-                    if insertedData == "email":
-                        conn.send("email".encode(FORMAT))
 
-                else:
-                    if msg == DISCONNECT_MESSAGE:
-                        connected = False
+                if msg == DISCONNECT_MESSAGE:
+                    connected = False
 
-                    print(f"[{addr}] {msg}")
-                    for client in clients :
-                        if client == conn :
-                            continue
-                        
-                        client.send(f"[{addr}] {msg}".encode(FORMAT))
+                print(f"[{username}] {msg}")
+                for client in clients :
+                    if client == conn :
+                        continue
+
+                    client.send(f"[{username}]: {msg}".encode(FORMAT))
     finally:
         with clientsLock:
             for client in clients :
@@ -70,9 +57,11 @@ def start():
     print(f"[LISTENING] Server is listening on {SERVER}")
     while True:
         conn, addr  = server.accept()
+        msg_length = conn.recv(HEADER).decode(FORMAT)
+        username = conn.recv(int(msg_length)).decode(FORMAT)
         with clientsLock :
             clients.append(conn)
-        thread = threading.Thread(target=handle_client, args=(conn, addr))
+        thread = threading.Thread(target=handle_client, args=(conn, username))
         thread.start()
         print(f"[Active CONNECTIONS] {threading.active_count() - 1 } ") 
 
